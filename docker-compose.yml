@@ -1,0 +1,36 @@
+services:
+  otp:
+    image: opentripplanner/opentripplanner:latest
+    container_name: otp
+    restart: unless-stopped
+    ports:
+      - "9090:8080"
+    volumes:
+      - ./otp:/var/opentripplanner
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx10g"
+    command: --load --serve
+
+  osrm_car:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: osrm_car
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm:/data
+    command: osrm-routed --algorithm mld /data/austria.osrm
+
+  osrm_frontend:
+    image: osrm/osrm-frontend:latest
+    container_name: osrm_frontend
+    restart: unless-stopped
+    ports:
+      - "9966:9966"
+    environment:
+      OSRM_BACKEND: "http://192.168.18.232:5000"
+      OSRM_CENTER: "48.2082,16.3738"
+      OSRM_ZOOM: "12"
+      OSRM_LABEL: "OSRM Car"
+    depends_on:
+      - osrm_car
