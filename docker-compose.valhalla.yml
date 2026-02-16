@@ -1,0 +1,32 @@
+services:
+  valhalla:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: valhalla
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./valhalla/custom_files:/custom_files
+      - ./valhalla/gtfs_feeds:/gtfs_feeds
+    environment:
+      # build from local PBFs in /custom_files
+      serve_tiles: "True"
+      force_rebuild: "False"
+      build_tar: "True"
+
+      # make transit work (reads unzipped feeds from /gtfs_feeds/<feedname>/)
+      build_transit: "True"
+
+      # good defaults for time-dependent routing responses
+      build_admins: "True"
+      build_time_zones: "True"
+
+      # tune if your box struggles during build
+      server_threads: "2"
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail -s http://localhost:8002/status >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 2s
+      retries: 12
+      start_period: 30s
